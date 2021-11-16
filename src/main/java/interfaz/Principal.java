@@ -6,11 +6,13 @@
 package interfaz;
 
 import datos.ClientesDao;
+import datos.Conexion;
 import datos.EWalletDao;
 import datos.ProductosDao;
 import dominio.Clientes;
 import dominio.EWallet;
 import dominio.Productos;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
@@ -119,6 +121,15 @@ public class Principal {
     }
 
     public static void Comprar(Clientes cliente, EWallet ewall) throws SQLException {
+        Connection conexion = null;
+        
+            conexion = Conexion.getConnection();
+            if (conexion.getAutoCommit()) {
+                conexion.setAutoCommit(false);
+            }
+            
+        
+        
         Scanner sc = new Scanner(System.in);
         int idProducto, cantidad, puntos, stock;
         double precio, totalDinero;
@@ -141,16 +152,6 @@ public class Principal {
                 product = listProduct.get(i);
             }
         }
-        ;
-        stock = product.getStock() - cantidad;
-        System.out.println(stock);
-        //product.setStock(stock);
-        //pro.actualizar(product);
-        precio = product.getPrecio();
-        totalDinero = precio * cantidad;
-        System.out.println("Dinero  " + totalDinero);
-        puntos = product.getPuntos();
-        totalPuntos = puntos * cantidad;
         if (ewall.getDNI() == null) {
 
             List<EWallet> listEwallet = wao.seleccionar();
@@ -163,13 +164,26 @@ public class Principal {
                 }
             }
         }
+        try{
+        stock = product.getStock() - cantidad;
+        precio = product.getPrecio();
+        totalDinero = precio * cantidad;
+        puntos = product.getPuntos();
+        totalPuntos = puntos * cantidad;
+        ewall.setDinero(ewall.getDinero()-totalDinero);
+        ewall.setPuntos(totalPuntos);
+        product.setStock(stock);
+        pro.actualizar(product);
+        wao.actualizar(ewall);
 
-//        totalDinero = ewall.getDinero() - totalDinero;
-//        ewall.setDinero(ewall.getDinero()-totalDinero);
-//        ewall.setPuntos(totalPuntos);
-//        System.out.println("total puntos " + totalPuntos);
-//        EWalletDao walldao = new EWalletDao();
-//        walldao.actualizar(ewall);
+        conexion.commit();
+            System.out.println("Se ha hecho commit de la transaccion");
+
+        }catch (SQLException ex) {
+            conexion.rollback();
+            ex.printStackTrace(System.out);
+            System.out.println("Entramos al rollback");   
+        }
     }
 
     private static void Devolver(Clientes cliente, EWallet ewall) {
