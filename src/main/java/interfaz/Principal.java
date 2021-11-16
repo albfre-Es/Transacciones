@@ -186,7 +186,7 @@ public class Principal {
         }
     }
 
-    private static void Devolver(Clientes cliente, EWallet ewall) {
+    private static void Devolver(Clientes cliente, EWallet ewall)throws SQLException {
 
     }
 }
